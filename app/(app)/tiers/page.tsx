@@ -32,7 +32,7 @@ export default async function TiersPage() {
       <div className="mb-6">
         <h1 className="text-3xl font-extrabold tracking-tight text-ink">Tier List</h1>
         <p className="mt-1 text-lg text-dim">
-          Rank what you&rsquo;ve played. Click a hero to add its build.
+          Rank what you&rsquo;ve played &mdash; drag heroes in, or click one to pick a tier.
         </p>
       </div>
       <TierBoard heroes={heroes} viewer={viewer} initial={initial} />

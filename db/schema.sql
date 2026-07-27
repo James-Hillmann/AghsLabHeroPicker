@@ -14,7 +14,7 @@
 create table if not exists rankings (
   hero_slug  text not null,
   author     text not null check (author in ('james', 'liam')),
-  tier       text check (tier in ('best', 'does_well', 'has_potential', 'dogshit')),
+  tier       text check (tier in ('best', 'does_well', 'has_potential', 'struggle_bus', 'dogshit')),
   position   double precision not null default 0,
   build      jsonb not null default '{}'::jsonb,
   updated_at timestamptz not null default now(),

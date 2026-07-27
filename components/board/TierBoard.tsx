@@ -24,7 +24,7 @@ import { AUTHOR_NAME, AUTHORS, type Author } from '@/lib/authors'
 import { ATTRIBUTES, ATTRIBUTE_COLOR, portraitUrl, type Attribute } from '@/lib/heroes'
 import { type Build } from '@/lib/rankings'
 import { setTier } from '@/app/actions/rankings'
-import { TIERS, type TierId } from '@/lib/tiers'
+import { TIERS, TIER_IDS, type TierId } from '@/lib/tiers'
 import { BuildCard } from './BuildCard'
 
 export type HeroLite = { slug: string; name: string; attribute: Attribute }
@@ -34,7 +34,8 @@ type AllData = Record<Author, PersonData>
 type ContainerId = 'tray' | TierId
 type Containers = Record<ContainerId, string[]>
 
-const CONTAINER_IDS: ContainerId[] = ['best', 'does_well', 'has_potential', 'dogshit', 'tray']
+// Derived from the tier list so adding/removing a tier is a one-file change in lib/tiers.ts.
+const CONTAINER_IDS: ContainerId[] = [...TIER_IDS, 'tray']
 
 // The read-only hover build card is switched off for the initial release. Everything for it is
 // still wired up -- flip this to `true` to bring it back (no other change needed).
@@ -48,7 +49,7 @@ const ATTR_LABEL: Record<Attribute, string> = {
 }
 
 function buildContainers(heroes: HeroLite[], data: PersonData): Containers {
-  const out: Containers = { best: [], does_well: [], has_potential: [], dogshit: [], tray: [] }
+  const out = Object.fromEntries(CONTAINER_IDS.map((id) => [id, [] as string[]])) as Containers
   for (const hero of heroes) {
     const entry = data[hero.slug]
     const cid: ContainerId = entry?.tier ?? 'tray'
