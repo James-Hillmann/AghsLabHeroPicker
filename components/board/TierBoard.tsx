@@ -7,10 +7,12 @@ import {
   DndContext,
   DragOverlay,
   PointerSensor,
-  closestCorners,
+  pointerWithin,
+  rectIntersection,
   useDroppable,
   useSensor,
   useSensors,
+  type CollisionDetection,
   type DragEndEvent,
   type DragOverEvent,
   type DragStartEvent,
@@ -57,6 +59,16 @@ function buildContainers(heroes: HeroLite[], data: PersonData): Containers {
     out[tier.id].sort((a, b) => (data[a]?.position ?? 0) - (data[b]?.position ?? 0))
   }
   return out
+}
+
+// Pointer-first collision detection. The default corner/center strategies measure the dragged
+// item's own rect, so once a hero is sitting in one lane that lane keeps "winning" and snaps it
+// back when you drag toward the adjacent lane. Detecting by the cursor's position instead lets
+// whichever lane the pointer is actually over take the hero. rectIntersection is the fallback for
+// the rare frame where the pointer sits in a gap between droppables.
+const collisionDetection: CollisionDetection = (args) => {
+  const pointerCollisions = pointerWithin(args)
+  return pointerCollisions.length > 0 ? pointerCollisions : rectIntersection(args)
 }
 
 // ---------------------------------------------------------------------------
@@ -474,7 +486,7 @@ export function TierBoard({
       <DndContext
         id="tier-board"
         sensors={sensors}
-        collisionDetection={closestCorners}
+        collisionDetection={collisionDetection}
         onDragStart={onDragStart}
         onDragOver={onDragOver}
         onDragEnd={onDragEnd}
