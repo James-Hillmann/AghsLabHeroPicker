@@ -26,7 +26,6 @@ import { type Build } from '@/lib/rankings'
 import { setTier } from '@/app/actions/rankings'
 import { TIERS, type TierId } from '@/lib/tiers'
 import { BuildCard } from './BuildCard'
-import { BuildEditor } from './BuildEditor'
 
 export type HeroLite = { slug: string; name: string; attribute: Attribute }
 type Entry = { tier: TierId | null; position: number; build: Build }
@@ -98,7 +97,7 @@ function SortableTile({
   editable: boolean
   onHover: (slug: string, rect: DOMRect) => void
   onLeave: () => void
-  onOpen: (slug: string) => void
+  onOpen: (slug: string, rect: DOMRect) => void
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: hero.slug,
@@ -116,7 +115,7 @@ function SortableTile({
         SHOW_HOVER_CARD ? (e) => onHover(hero.slug, e.currentTarget.getBoundingClientRect()) : undefined
       }
       onMouseLeave={SHOW_HOVER_CARD ? onLeave : undefined}
-      onClick={() => editable && onOpen(hero.slug)}
+      onClick={(e) => editable && onOpen(hero.slug, e.currentTarget.getBoundingClientRect())}
       className={editable ? 'cursor-grab touch-none active:cursor-grabbing' : 'cursor-default'}
     >
       <TileVisual hero={hero} dragging={isDragging} />
@@ -143,7 +142,7 @@ function Lane({
   editable: boolean
   onHover: (slug: string, rect: DOMRect) => void
   onLeave: () => void
-  onOpen: (slug: string) => void
+  onOpen: (slug: string, rect: DOMRect) => void
 }) {
   const { setNodeRef } = useContainerDroppable(tier.id)
   return (
@@ -191,7 +190,7 @@ function Tray({
   editable: boolean
   onHover: (slug: string, rect: DOMRect) => void
   onLeave: () => void
-  onOpen: (slug: string) => void
+  onOpen: (slug: string, rect: DOMRect) => void
 }) {
   const { setNodeRef } = useContainerDroppable('tray')
   const groups = ATTRIBUTES.map((attr) => ({
@@ -251,7 +250,9 @@ export function TierBoard({
   const [viewed, setViewed] = useState<Author>(viewer)
   const [containers, setContainers] = useState<Containers>(() => buildContainers(heroes, initial[viewer]))
   const [activeId, setActiveId] = useState<string | null>(null)
-  const [editing, setEditing] = useState<string | null>(null)
+  // Clicking a hero opens a small tier picker anchored to it, so you can send it to a tier
+  // without dragging (or scrolling up to the lanes).
+  const [assign, setAssign] = useState<{ slug: string; rect: DOMRect } | null>(null)
 
   const draggingRef = useRef(false)
   const editable = viewed === viewer
@@ -301,7 +302,38 @@ export function TierBoard({
   function onDragStart(event: DragStartEvent) {
     draggingRef.current = true
     setHover(null)
+    setAssign(null)
     setActiveId(String(event.active.id))
+  }
+
+  // Send a hero to a tier (or back to the tray) from the click-to-assign picker. Appends to the
+  // end of the target tier. Mirrors onDragEnd's optimistic-write-then-revert.
+  function assignTier(slug: string, tier: TierId | null) {
+    const mine = data[viewer]
+    const position =
+      tier === null
+        ? 0
+        : Math.max(0, ...Object.values(mine).filter((e) => e.tier === tier).map((e) => e.position)) + 1
+
+    const previous = data
+    setData((prev) => ({
+      ...prev,
+      [viewer]: {
+        ...prev[viewer],
+        [slug]: {
+          tier,
+          position,
+          build: prev[viewer][slug]?.build ?? { keyShards: [], relics: [], artifacts: [], notes: '' },
+        },
+      },
+    }))
+    setAssign(null)
+    setTier(slug, tier, position).then((result) => {
+      if (!result.ok) {
+        console.error(result.error)
+        setData(previous)
+      }
+    })
   }
 
   function onDragOver(event: DragOverEvent) {
@@ -478,7 +510,7 @@ export function TierBoard({
         </div>
         <p className="text-base text-dim">
           {editable
-            ? 'Drag to rank · click a hero to edit its build'
+            ? 'Drag a hero to a tier, or click it to pick a tier'
             : `Viewing ${AUTHOR_NAME[viewed]}'s board — read only`}
         </p>
       </div>
@@ -506,7 +538,7 @@ export function TierBoard({
               editable={editable}
               onHover={onHover}
               onLeave={onLeave}
-              onOpen={setEditing}
+              onOpen={(slug, rect) => setAssign({ slug, rect })}
             />
           ))}
         </div>
@@ -515,14 +547,16 @@ export function TierBoard({
           <h2 className="text-xl font-bold text-ink">
             Unranked <span className="font-medium text-dim">· {containers.tray.length}</span>
           </h2>
-          <p className="mb-4 mt-1 text-base text-dim">Grouped by attribute. Drag any hero up into a tier.</p>
+          <p className="mb-4 mt-1 text-base text-dim">
+            Grouped by attribute. Click a hero to pick a tier, or drag it up.
+          </p>
           <Tray
             slugs={containers.tray}
             heroBySlug={heroBySlug}
             editable={editable}
             onHover={onHover}
             onLeave={onLeave}
-            onOpen={setEditing}
+            onOpen={(slug, rect) => setAssign({ slug, rect })}
           />
         </div>
 
@@ -542,31 +576,82 @@ export function TierBoard({
           document.body,
         )}
 
-      {editing &&
-        heroBySlug.get(editing) &&
+      {assign &&
+        heroBySlug.get(assign.slug) &&
         createPortal(
-          <BuildEditor
-            heroSlug={editing}
-            name={heroBySlug.get(editing)!.name}
-            initial={data[viewer][editing]?.build ?? { keyShards: [], relics: [], artifacts: [], notes: '' }}
-            onClose={() => setEditing(null)}
-            onSaved={(build) =>
-              setData((prev) => ({
-                ...prev,
-                [viewer]: {
-                  ...prev[viewer],
-                  [editing]: {
-                    tier: prev[viewer][editing]?.tier ?? null,
-                    position: prev[viewer][editing]?.position ?? 0,
-                    build,
-                  },
-                },
-              }))
-            }
+          <TierPicker
+            hero={heroBySlug.get(assign.slug)!}
+            rect={assign.rect}
+            currentTier={data[viewer][assign.slug]?.tier ?? null}
+            onPick={(tier) => assignTier(assign.slug, tier)}
+            onClose={() => setAssign(null)}
           />,
           document.body,
         )}
     </div>
+  )
+}
+
+function TierPicker({
+  hero,
+  rect,
+  currentTier,
+  onPick,
+  onClose,
+}: {
+  hero: HeroLite
+  rect: DOMRect
+  currentTier: TierId | null
+  onPick: (tier: TierId | null) => void
+  onClose: () => void
+}) {
+  const width = 240
+  const margin = 12
+  const estH = 340
+  let left = rect.left + rect.width / 2 - width / 2
+  if (left + width > window.innerWidth) left = window.innerWidth - width - margin
+  if (left < margin) left = margin
+  let top = rect.bottom + 8
+  if (top + estH > window.innerHeight) top = Math.max(margin, rect.top - estH - 8)
+
+  return (
+    <>
+      <div className="fixed inset-0 z-40" onClick={onClose} />
+      <div
+        className="card fixed z-50 p-3 shadow-2xl"
+        style={{ left, top, width }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <p className="mb-2 px-1 text-base font-semibold text-ink">{hero.name}</p>
+        <div className="flex flex-col gap-1.5">
+          {TIERS.map((t) => {
+            const active = currentTier === t.id
+            return (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => onPick(t.id)}
+                className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-left text-base font-medium transition-colors hover:brightness-125"
+                style={{ backgroundColor: `color-mix(in srgb, ${t.color} ${active ? 34 : 16}%, transparent)`, color: t.color }}
+              >
+                <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: t.color }} />
+                {t.label}
+                {active && <span className="ml-auto text-sm">current</span>}
+              </button>
+            )
+          })}
+          {currentTier && (
+            <button
+              type="button"
+              onClick={() => onPick(null)}
+              className="mt-1 rounded-lg px-3 py-2 text-left text-base text-dim transition-colors hover:bg-white/5 hover:text-ink"
+            >
+              Remove from tiers
+            </button>
+          )}
+        </div>
+      </div>
+    </>
   )
 }
 
