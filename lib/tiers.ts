@@ -5,6 +5,7 @@
 
 export const TIERS = [
   { id: 'best', label: 'Best', blurb: 'Broken. Pick it every time.', color: '#e7c15a' },
+  { id: 'very_strong', label: 'Very Strong', blurb: 'Just shy of broken.', color: '#c3d84a' },
   { id: 'does_well', label: 'Does Well', blurb: 'Reliably good.', color: '#7fc06a' },
   { id: 'has_potential', label: 'Has Potential', blurb: 'Flashes of promise.', color: '#7dd3fc' },
   { id: 'struggle_bus', label: 'Struggle Bus', blurb: 'Copium required.', color: '#e0894a' },
