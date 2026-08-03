@@ -17,6 +17,9 @@ create table if not exists rankings (
   tier       text check (tier in ('best', 'does_well', 'has_potential', 'struggle_bus', 'dogshit')),
   position   double precision not null default 0,
   build      jsonb not null default '{}'::jsonb,
+  -- The game patch version this ranking was last set under. Lets the board flag a hero that
+  -- changed in a newer patch until the person re-ranks it. Null = set before the app tracked it.
+  patch      text,
   updated_at timestamptz not null default now(),
   primary key (hero_slug, author)
 );

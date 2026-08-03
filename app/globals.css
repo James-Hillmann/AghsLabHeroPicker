@@ -63,6 +63,18 @@ body {
   border-radius: 16px;
 }
 
+/* "Changed this patch" badge: warm gold coin with a ring off the background and a soft pulse. */
+.patch-badge {
+  background: linear-gradient(140deg, #f4d06a, #e0894a);
+  box-shadow: 0 0 0 2px var(--bg), 0 0 10px rgba(231, 193, 90, 0.7);
+  cursor: help;
+  animation: patch-pulse 2.2s ease-in-out infinite;
+}
+@keyframes patch-pulse {
+  0%, 100% { box-shadow: 0 0 0 2px var(--bg), 0 0 5px rgba(231, 193, 90, 0.45); }
+  50% { box-shadow: 0 0 0 2px var(--bg), 0 0 14px rgba(231, 193, 90, 0.95); }
+}
+
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;

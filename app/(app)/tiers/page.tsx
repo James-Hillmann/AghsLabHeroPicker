@@ -6,7 +6,13 @@ import { type Build } from '@/lib/rankings'
 import { getAllRankings } from '@/lib/rankings-db'
 import { type TierId } from '@/lib/tiers'
 
-type Entry = { tier: TierId | null; position: number; build: Build }
+type Entry = {
+  tier: TierId | null
+  position: number
+  build: Build
+  updatedAt: string
+  patchVersion: string | null
+}
 
 export default async function TiersPage() {
   const viewer = await requireSession()
@@ -24,6 +30,8 @@ export default async function TiersPage() {
       tier: ranking.tier,
       position: ranking.position,
       build: ranking.build,
+      updatedAt: ranking.updatedAt,
+      patchVersion: ranking.patchVersion,
     }
   }
 

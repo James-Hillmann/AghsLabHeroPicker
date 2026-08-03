@@ -25,6 +25,10 @@ export type Ranking = {
   tier: TierId | null
   position: number
   build: Build
+  /** ISO timestamp of the last change to this ranking. */
+  updatedAt: string
+  /** Game patch version this ranking was last set under; null if set before tracking. */
+  patchVersion: string | null
 }
 
 /** Coerce whatever came out of the jsonb column into a well-formed Build. */

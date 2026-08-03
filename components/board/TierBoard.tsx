@@ -24,11 +24,18 @@ import { AUTHOR_NAME, AUTHORS, type Author } from '@/lib/authors'
 import { ATTRIBUTES, ATTRIBUTE_COLOR, portraitUrl, type Attribute } from '@/lib/heroes'
 import { type Build } from '@/lib/rankings'
 import { setTier } from '@/app/actions/rankings'
+import { isStaleForPatch, PATCH_VERSION, patchForHero, type HeroPatch } from '@/lib/patch'
 import { TIERS, TIER_IDS, type TierId } from '@/lib/tiers'
 import { BuildCard } from './BuildCard'
 
 export type HeroLite = { slug: string; name: string; attribute: Attribute }
-type Entry = { tier: TierId | null; position: number; build: Build }
+type Entry = {
+  tier: TierId | null
+  position: number
+  build: Build
+  updatedAt: string
+  patchVersion: string | null
+}
 type PersonData = Record<string, Entry>
 type AllData = Record<Author, PersonData>
 type ContainerId = 'tray' | TierId
@@ -73,9 +80,31 @@ const collisionDetection: CollisionDetection = (args) => {
 
 // ---------------------------------------------------------------------------
 
-function TileVisual({ hero, dragging }: { hero: HeroLite; dragging?: boolean }) {
+function TileVisual({
+  hero,
+  dragging,
+  patch,
+  onBadgeEnter,
+  onBadgeLeave,
+}: {
+  hero: HeroLite
+  dragging?: boolean
+  patch?: HeroPatch | null
+  onBadgeEnter?: (rect: DOMRect) => void
+  onBadgeLeave?: () => void
+}) {
   return (
-    <div className={`w-20 ${dragging ? 'opacity-40' : ''}`}>
+    <div className={`relative w-20 ${dragging ? 'opacity-40' : ''}`}>
+      {patch && (
+        <span
+          onMouseEnter={(e) => onBadgeEnter?.(e.currentTarget.getBoundingClientRect())}
+          onMouseLeave={onBadgeLeave}
+          className="patch-badge absolute -right-2 -top-2 z-10 grid h-6 w-6 place-items-center rounded-full text-sm font-extrabold text-black"
+          aria-label={`Changed in patch ${PATCH_VERSION}`}
+        >
+          !
+        </span>
+      )}
       <div
         className="relative aspect-[3/4] overflow-hidden rounded-xl ring-2 transition-transform duration-150 hover:-translate-y-0.5"
         style={{ '--tw-ring-color': ATTRIBUTE_COLOR[hero.attribute] } as React.CSSProperties}
@@ -90,15 +119,21 @@ function TileVisual({ hero, dragging }: { hero: HeroLite; dragging?: boolean }) 
 function SortableTile({
   hero,
   editable,
+  patch,
   onHover,
   onLeave,
   onOpen,
+  onBadgeEnter,
+  onBadgeLeave,
 }: {
   hero: HeroLite
   editable: boolean
+  patch: HeroPatch | null
   onHover: (slug: string, rect: DOMRect) => void
   onLeave: () => void
   onOpen: (slug: string, rect: DOMRect) => void
+  onBadgeEnter: (slug: string, rect: DOMRect) => void
+  onBadgeLeave: () => void
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: hero.slug,
@@ -119,7 +154,13 @@ function SortableTile({
       onClick={(e) => editable && onOpen(hero.slug, e.currentTarget.getBoundingClientRect())}
       className={editable ? 'cursor-grab touch-none active:cursor-grabbing' : 'cursor-default'}
     >
-      <TileVisual hero={hero} dragging={isDragging} />
+      <TileVisual
+        hero={hero}
+        dragging={isDragging}
+        patch={patch}
+        onBadgeEnter={(rect) => onBadgeEnter(hero.slug, rect)}
+        onBadgeLeave={onBadgeLeave}
+      />
     </div>
   )
 }
@@ -128,22 +169,26 @@ function useContainerDroppable(id: ContainerId) {
   return useDroppable({ id })
 }
 
+type TileHandlers = {
+  editable: boolean
+  patchFor: (slug: string) => HeroPatch | null
+  onHover: (slug: string, rect: DOMRect) => void
+  onLeave: () => void
+  onOpen: (slug: string, rect: DOMRect) => void
+  onBadgeEnter: (slug: string, rect: DOMRect) => void
+  onBadgeLeave: () => void
+}
+
 function Lane({
   tier,
   heroBySlug,
   slugs,
-  editable,
-  onHover,
-  onLeave,
-  onOpen,
+  handlers,
 }: {
   tier: (typeof TIERS)[number]
   heroBySlug: Map<string, HeroLite>
   slugs: string[]
-  editable: boolean
-  onHover: (slug: string, rect: DOMRect) => void
-  onLeave: () => void
-  onOpen: (slug: string, rect: DOMRect) => void
+  handlers: TileHandlers
 }) {
   const { setNodeRef } = useContainerDroppable(tier.id)
   return (
@@ -165,10 +210,13 @@ function Lane({
               <SortableTile
                 key={slug}
                 hero={hero}
-                editable={editable}
-                onHover={onHover}
-                onLeave={onLeave}
-                onOpen={onOpen}
+                editable={handlers.editable}
+                patch={handlers.patchFor(slug)}
+                onHover={handlers.onHover}
+                onLeave={handlers.onLeave}
+                onOpen={handlers.onOpen}
+                onBadgeEnter={handlers.onBadgeEnter}
+                onBadgeLeave={handlers.onBadgeLeave}
               />
             ) : null
           })}
@@ -181,17 +229,11 @@ function Lane({
 function Tray({
   slugs,
   heroBySlug,
-  editable,
-  onHover,
-  onLeave,
-  onOpen,
+  handlers,
 }: {
   slugs: string[]
   heroBySlug: Map<string, HeroLite>
-  editable: boolean
-  onHover: (slug: string, rect: DOMRect) => void
-  onLeave: () => void
-  onOpen: (slug: string, rect: DOMRect) => void
+  handlers: TileHandlers
 }) {
   const { setNodeRef } = useContainerDroppable('tray')
   const groups = ATTRIBUTES.map((attr) => ({
@@ -218,10 +260,13 @@ function Tray({
                   <SortableTile
                     key={slug}
                     hero={hero}
-                    editable={editable}
-                    onHover={onHover}
-                    onLeave={onLeave}
-                    onOpen={onOpen}
+                    editable={handlers.editable}
+                    patch={handlers.patchFor(slug)}
+                    onHover={handlers.onHover}
+                    onLeave={handlers.onLeave}
+                    onOpen={handlers.onOpen}
+                    onBadgeEnter={handlers.onBadgeEnter}
+                    onBadgeLeave={handlers.onBadgeLeave}
                   />
                 ) : null
               })}
@@ -300,10 +345,39 @@ export function TierBoard({
     setHover(null)
   }, [])
 
+  // --- "changed this patch" badge + its hover popover ---
+  // A hero shows the badge (for the viewed person) if it changed in the patch and that person
+  // hasn't re-ranked it since. The popover is interactive (long change lists scroll), so leaving
+  // the badge schedules a close that moving into the popover cancels.
+  const patchFor = useCallback(
+    (slug: string): HeroPatch | null => {
+      const hp = patchForHero(slug)
+      if (!hp) return null
+      return isStaleForPatch(data[viewed][slug]?.patchVersion) ? hp : null
+    },
+    [data, viewed],
+  )
+  const [patchHover, setPatchHover] = useState<{ slug: string; rect: DOMRect } | null>(null)
+  const patchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const keepPatch = useCallback(() => {
+    if (patchTimer.current) clearTimeout(patchTimer.current)
+  }, [])
+  const openPatch = useCallback((slug: string, rect: DOMRect) => {
+    if (draggingRef.current) return
+    if (patchTimer.current) clearTimeout(patchTimer.current)
+    setPatchHover({ slug, rect })
+  }, [])
+  const closePatch = useCallback(() => {
+    if (patchTimer.current) clearTimeout(patchTimer.current)
+    patchTimer.current = setTimeout(() => setPatchHover(null), 160)
+  }, [])
+
   function onDragStart(event: DragStartEvent) {
     draggingRef.current = true
     setHover(null)
     setAssign(null)
+    if (patchTimer.current) clearTimeout(patchTimer.current)
+    setPatchHover(null)
     setActiveId(String(event.active.id))
   }
 
@@ -325,6 +399,8 @@ export function TierBoard({
           tier,
           position,
           build: prev[viewer][slug]?.build ?? { keyShards: [], relics: [], artifacts: [], notes: '' },
+          updatedAt: new Date().toISOString(),
+          patchVersion: PATCH_VERSION,
         },
       },
     }))
@@ -401,6 +477,8 @@ export function TierBoard({
           tier,
           position,
           build: prev[viewer][slug]?.build ?? { keyShards: [], relics: [], artifacts: [], notes: '' },
+          updatedAt: new Date().toISOString(),
+          patchVersion: PATCH_VERSION,
         },
       },
     }))
@@ -414,6 +492,16 @@ export function TierBoard({
   }
 
   const activeHero = activeId ? heroBySlug.get(activeId) : null
+
+  const handlers: TileHandlers = {
+    editable,
+    patchFor,
+    onHover,
+    onLeave,
+    onOpen: (slug, rect) => setAssign({ slug, rect }),
+    onBadgeEnter: openPatch,
+    onBadgeLeave: closePatch,
+  }
 
   // Static, non-interactive mirror for SSR + first paint (see `mounted` above).
   if (!mounted) {
@@ -449,7 +537,7 @@ export function TierBoard({
               <div className="flex min-h-[150px] flex-1 flex-wrap content-start gap-3 p-4">
                 {containers[tier.id].map((slug) => {
                   const hero = heroBySlug.get(slug)
-                  return hero ? <TileVisual key={slug} hero={hero} /> : null
+                  return hero ? <TileVisual key={slug} hero={hero} patch={patchFor(slug)} /> : null
                 })}
               </div>
             </div>
@@ -475,7 +563,7 @@ export function TierBoard({
                   <div className="flex flex-wrap gap-3">
                     {slugs.map((slug) => {
                       const hero = heroBySlug.get(slug)
-                      return hero ? <TileVisual key={slug} hero={hero} /> : null
+                      return hero ? <TileVisual key={slug} hero={hero} patch={patchFor(slug)} /> : null
                     })}
                   </div>
                 </section>
@@ -536,10 +624,7 @@ export function TierBoard({
               tier={tier}
               heroBySlug={heroBySlug}
               slugs={containers[tier.id]}
-              editable={editable}
-              onHover={onHover}
-              onLeave={onLeave}
-              onOpen={(slug, rect) => setAssign({ slug, rect })}
+              handlers={handlers}
             />
           ))}
         </div>
@@ -551,14 +636,7 @@ export function TierBoard({
           <p className="mb-4 mt-1 text-base text-dim">
             Grouped by attribute. Click a hero to pick a tier, or drag it up.
           </p>
-          <Tray
-            slugs={containers.tray}
-            heroBySlug={heroBySlug}
-            editable={editable}
-            onHover={onHover}
-            onLeave={onLeave}
-            onOpen={(slug, rect) => setAssign({ slug, rect })}
-          />
+          <Tray slugs={containers.tray} heroBySlug={heroBySlug} handlers={handlers} />
         </div>
 
         <DragOverlay>{activeHero ? <TileVisual hero={activeHero} /> : null}</DragOverlay>
@@ -589,6 +667,82 @@ export function TierBoard({
           />,
           document.body,
         )}
+
+      {patchHover &&
+        heroBySlug.get(patchHover.slug) &&
+        patchForHero(patchHover.slug) &&
+        createPortal(
+          <PatchPopover
+            hero={heroBySlug.get(patchHover.slug)!}
+            rect={patchHover.rect}
+            onEnter={keepPatch}
+            onLeave={closePatch}
+          />,
+          document.body,
+        )}
+    </div>
+  )
+}
+
+function PatchPopover({
+  hero,
+  rect,
+  onEnter,
+  onLeave,
+}: {
+  hero: HeroLite
+  rect: DOMRect
+  onEnter: () => void
+  onLeave: () => void
+}) {
+  const patch = patchForHero(hero.slug)!
+  const width = 380
+  const margin = 12
+  const estH = 420
+  let left = rect.right + 10
+  if (left + width > window.innerWidth) left = rect.left - width - 10
+  if (left < margin) left = margin
+  let top = rect.top - 8
+  if (top + estH > window.innerHeight) top = Math.max(margin, window.innerHeight - estH - margin)
+
+  const tagColor: Record<string, string> = {
+    ADDED: '#5fbf7a',
+    CHANGED: '#7dd3fc',
+    REMOVED: '#e0674a',
+    REWORKED: '#e7c15a',
+  }
+
+  return (
+    <div
+      className="card fixed z-50 flex max-h-[70vh] w-[380px] max-w-[92vw] flex-col overflow-hidden shadow-2xl"
+      style={{ left, top }}
+      onMouseEnter={onEnter}
+      onMouseLeave={onLeave}
+    >
+      <div className="flex items-baseline justify-between border-b border-line px-5 py-3">
+        <p className="text-lg font-bold text-ink">{hero.name}</p>
+        <span className="text-sm font-semibold text-[#e7c15a]">Updated · {PATCH_VERSION}</span>
+      </div>
+      <div className="space-y-4 overflow-y-auto px-5 py-4">
+        {patch.sections.map((section) => (
+          <div key={section.ability}>
+            <p className="mb-1.5 text-base font-semibold text-ink">{section.ability}</p>
+            <ul className="space-y-1.5">
+              {section.changes.map((change, i) => (
+                <li key={i} className="flex gap-2 text-[0.95rem] leading-snug text-ink/85">
+                  <span
+                    className="mt-0.5 shrink-0 text-xs font-bold"
+                    style={{ color: tagColor[change.kind] }}
+                  >
+                    {change.kind}
+                  </span>
+                  <span>{change.text}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

@@ -2,6 +2,7 @@ import 'server-only'
 
 import { type Author } from './authors'
 import { read, sql } from './db'
+import { PATCH_VERSION } from './patch'
 import { type Build, type Ranking, toBuild } from './rankings'
 import { isTierId, type TierId } from './tiers'
 
@@ -11,6 +12,8 @@ type Row = {
   tier: string | null
   position: number
   build: unknown
+  updated_at: string | Date
+  patch: string | null
 }
 
 function toRanking(row: Row): Ranking {
@@ -20,6 +23,8 @@ function toRanking(row: Row): Ranking {
     tier: isTierId(row.tier) ? row.tier : null,
     position: Number(row.position) || 0,
     build: toBuild(row.build),
+    updatedAt: new Date(row.updated_at).toISOString(),
+    patchVersion: row.patch ?? null,
   }
 }
 
@@ -32,7 +37,7 @@ export async function getAllRankings(): Promise<Ranking[]> {
   return read('rankings', [], async () => {
     const q = sql()
     const rows = (await q`
-      select hero_slug, author, tier, position, build
+      select hero_slug, author, tier, position, build, updated_at, patch
       from rankings
       order by position asc
     `) as Row[]
@@ -52,10 +57,11 @@ export async function setTier(
 ): Promise<void> {
   const q = sql()
   await q`
-    insert into rankings (hero_slug, author, tier, position)
-    values (${heroSlug}, ${author}, ${tier}, ${position})
+    insert into rankings (hero_slug, author, tier, position, patch)
+    values (${heroSlug}, ${author}, ${tier}, ${position}, ${PATCH_VERSION})
     on conflict (hero_slug, author)
-    do update set tier = excluded.tier, position = excluded.position, updated_at = now()
+    do update set tier = excluded.tier, position = excluded.position,
+                  patch = excluded.patch, updated_at = now()
   `
 }
 

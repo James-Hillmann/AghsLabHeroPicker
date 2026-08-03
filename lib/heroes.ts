@@ -278,6 +278,23 @@ export const HEROES: Hero[] = [
     ],
   },
   {
+    slug: 'huskar',
+    name: 'Huskar',
+    attribute: 'strength',
+    // Read from the mod's own hero_abilities.kv (workshop item 2483181385). His Labyrinth
+    // kit is a rework: a mana-less innate that turns mana costs into Flame, plus a sixth
+    // ability (Giant Spear). Blood Magic and Giant Spear use workshop-custom textures with
+    // no Valve CDN icon, so they carry no valveId.
+    abilities: [
+      { name: 'Blood Magic' },
+      { name: 'Inner Fire', valveId: 'huskar_inner_fire' },
+      { name: 'Burning Spear', valveId: 'huskar_burning_spear' },
+      { name: 'Berserker\'s Blood', valveId: 'huskar_berserkers_blood' },
+      { name: 'Life Break', valveId: 'huskar_life_break' },
+      { name: 'Giant Spear' },
+    ],
+  },
+  {
     slug: 'juggernaut',
     name: 'Juggernaut',
     attribute: 'agility',
