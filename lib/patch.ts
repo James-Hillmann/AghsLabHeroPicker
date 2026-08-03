@@ -5,6 +5,8 @@
 //
 // Not 'server-only': the badge and its hover popover render in the browser.
 
+import { ABILITIES } from './abilities.generated'
+
 export type ChangeKind = 'ADDED' | 'CHANGED' | 'REMOVED' | 'REWORKED'
 export type Change = { kind: ChangeKind; text: string }
 export type AbilitySection = { ability: string; changes: Change[] }
@@ -217,6 +219,22 @@ export const PATCH_HEROES: Record<string, HeroPatch> = {
 
 export function patchForHero(slug: string): HeroPatch | undefined {
   return PATCH_HEROES[slug]
+}
+
+/**
+ * The Valve icon name for a changed ability, looked up from the ability catalogue by hero + name
+ * so the popover can show the same art as the rest of the app. null when the ability has no icon
+ * (e.g. a mod innate). Cached since the popover asks repeatedly.
+ */
+const iconCache = new Map<string, string | null>()
+export function abilityIconName(heroSlug: string, abilityName: string): string | null {
+  const key = `${heroSlug}|${abilityName}`
+  const cached = iconCache.get(key)
+  if (cached !== undefined) return cached
+  const ability = ABILITIES.find((a) => a.hero === heroSlug && a.name === abilityName)
+  const icon = ability?.iconName ?? null
+  iconCache.set(key, icon)
+  return icon
 }
 
 /**

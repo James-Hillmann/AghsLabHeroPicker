@@ -21,10 +21,10 @@ import { SortableContext, arrayMove, rectSortingStrategy, useSortable } from '@d
 import { CSS } from '@dnd-kit/utilities'
 
 import { AUTHOR_NAME, AUTHORS, type Author } from '@/lib/authors'
-import { ATTRIBUTES, ATTRIBUTE_COLOR, portraitUrl, type Attribute } from '@/lib/heroes'
+import { abilityIconUrl, ATTRIBUTES, ATTRIBUTE_COLOR, portraitUrl, type Attribute } from '@/lib/heroes'
 import { type Build } from '@/lib/rankings'
 import { setTier } from '@/app/actions/rankings'
-import { isStaleForPatch, PATCH_VERSION, patchForHero, type HeroPatch } from '@/lib/patch'
+import { abilityIconName, isStaleForPatch, PATCH_VERSION, patchForHero, type HeroPatch } from '@/lib/patch'
 import { TIERS, TIER_IDS, type TierId } from '@/lib/tiers'
 import { BuildCard } from './BuildCard'
 
@@ -719,14 +719,30 @@ function PatchPopover({
       onMouseEnter={onEnter}
       onMouseLeave={onLeave}
     >
-      <div className="flex items-baseline justify-between border-b border-line px-5 py-3">
+      <div className="flex items-center gap-3 border-b border-line px-5 py-3">
+        <div className="relative h-10 w-12 shrink-0 overflow-hidden rounded-md ring-1 ring-line">
+          <Image src={portraitUrl(hero.slug)} alt="" fill sizes="48px" className="object-cover" />
+        </div>
         <p className="text-lg font-bold text-ink">{hero.name}</p>
-        <span className="text-sm font-semibold text-[#e7c15a]">Updated · {PATCH_VERSION}</span>
+        <span className="ml-auto text-sm font-semibold text-[#e7c15a]">Updated · {PATCH_VERSION}</span>
       </div>
       <div className="space-y-4 overflow-y-auto px-5 py-4">
-        {patch.sections.map((section) => (
+        {patch.sections.map((section) => {
+          const icon = abilityIconName(hero.slug, section.ability)
+          return (
           <div key={section.ability}>
-            <p className="mb-1.5 text-base font-semibold text-ink">{section.ability}</p>
+            <div className="mb-1.5 flex items-center gap-2">
+              {icon ? (
+                <Image
+                  src={abilityIconUrl(icon)}
+                  alt=""
+                  width={28}
+                  height={28}
+                  className="h-7 w-7 shrink-0 rounded-md ring-1 ring-line"
+                />
+              ) : null}
+              <p className="text-base font-semibold text-ink">{section.ability}</p>
+            </div>
             <ul className="space-y-1.5">
               {section.changes.map((change, i) => (
                 <li key={i} className="flex gap-2 text-[0.95rem] leading-snug text-ink/85">
@@ -741,7 +757,8 @@ function PatchPopover({
               ))}
             </ul>
           </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )
