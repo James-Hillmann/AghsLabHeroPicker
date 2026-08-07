@@ -75,6 +75,18 @@ body {
   50% { box-shadow: 0 0 0 2px var(--bg), 0 0 14px rgba(231, 193, 90, 0.95); }
 }
 
+/* Older-patch badge: cooler blue coin — the hero changed in a past patch you haven't played since. */
+.patch-badge-old {
+  background: linear-gradient(140deg, #8fd3ff, #4a90e0);
+  box-shadow: 0 0 0 2px var(--bg), 0 0 10px rgba(120, 180, 240, 0.6);
+  cursor: help;
+  animation: patch-pulse-old 2.6s ease-in-out infinite;
+}
+@keyframes patch-pulse-old {
+  0%, 100% { box-shadow: 0 0 0 2px var(--bg), 0 0 5px rgba(120, 180, 240, 0.4); }
+  50% { box-shadow: 0 0 0 2px var(--bg), 0 0 13px rgba(120, 180, 240, 0.85); }
+}
+
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;

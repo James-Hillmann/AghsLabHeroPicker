@@ -24,7 +24,7 @@ import { AUTHOR_NAME, AUTHORS, type Author } from '@/lib/authors'
 import { abilityIconUrl, ATTRIBUTES, ATTRIBUTE_COLOR, portraitUrl, type Attribute } from '@/lib/heroes'
 import { type Build } from '@/lib/rankings'
 import { setTier } from '@/app/actions/rankings'
-import { abilityIconName, isStaleForPatch, PATCH_VERSION, patchForHero, type HeroPatch } from '@/lib/patch'
+import { abilityIconName, patchBadge, PATCH_VERSION, patchForHero, type PatchBadge } from '@/lib/patch'
 import { TIERS, TIER_IDS, type TierId } from '@/lib/tiers'
 import { BuildCard } from './BuildCard'
 
@@ -83,24 +83,28 @@ const collisionDetection: CollisionDetection = (args) => {
 function TileVisual({
   hero,
   dragging,
-  patch,
+  badge,
   onBadgeEnter,
   onBadgeLeave,
 }: {
   hero: HeroLite
   dragging?: boolean
-  patch?: HeroPatch | null
+  badge?: PatchBadge | null
   onBadgeEnter?: (rect: DOMRect) => void
   onBadgeLeave?: () => void
 }) {
   return (
     <div className={`relative w-20 ${dragging ? 'opacity-40' : ''}`}>
-      {patch && (
+      {badge && (
         <span
           onMouseEnter={(e) => onBadgeEnter?.(e.currentTarget.getBoundingClientRect())}
           onMouseLeave={onBadgeLeave}
-          className="patch-badge absolute -right-2 -top-2 z-10 grid h-6 w-6 place-items-center rounded-full text-sm font-extrabold text-black"
-          aria-label={`Changed in patch ${PATCH_VERSION}`}
+          className={`${badge.current ? 'patch-badge' : 'patch-badge-old'} absolute -right-2 -top-2 z-10 grid h-6 w-6 place-items-center rounded-full text-sm font-extrabold text-black`}
+          aria-label={
+            badge.current
+              ? `Changed in patch ${PATCH_VERSION}`
+              : `Changed in an earlier patch (${badge.patch.changedIn}) — not played since`
+          }
         >
           !
         </span>
@@ -119,7 +123,7 @@ function TileVisual({
 function SortableTile({
   hero,
   editable,
-  patch,
+  badge,
   onHover,
   onLeave,
   onOpen,
@@ -128,7 +132,7 @@ function SortableTile({
 }: {
   hero: HeroLite
   editable: boolean
-  patch: HeroPatch | null
+  badge: PatchBadge | null
   onHover: (slug: string, rect: DOMRect) => void
   onLeave: () => void
   onOpen: (slug: string, rect: DOMRect) => void
@@ -157,7 +161,7 @@ function SortableTile({
       <TileVisual
         hero={hero}
         dragging={isDragging}
-        patch={patch}
+        badge={badge}
         onBadgeEnter={(rect) => onBadgeEnter(hero.slug, rect)}
         onBadgeLeave={onBadgeLeave}
       />
@@ -171,7 +175,7 @@ function useContainerDroppable(id: ContainerId) {
 
 type TileHandlers = {
   editable: boolean
-  patchFor: (slug: string) => HeroPatch | null
+  patchFor: (slug: string) => PatchBadge | null
   onHover: (slug: string, rect: DOMRect) => void
   onLeave: () => void
   onOpen: (slug: string, rect: DOMRect) => void
@@ -211,7 +215,7 @@ function Lane({
                 key={slug}
                 hero={hero}
                 editable={handlers.editable}
-                patch={handlers.patchFor(slug)}
+                badge={handlers.patchFor(slug)}
                 onHover={handlers.onHover}
                 onLeave={handlers.onLeave}
                 onOpen={handlers.onOpen}
@@ -261,7 +265,7 @@ function Tray({
                     key={slug}
                     hero={hero}
                     editable={handlers.editable}
-                    patch={handlers.patchFor(slug)}
+                    badge={handlers.patchFor(slug)}
                     onHover={handlers.onHover}
                     onLeave={handlers.onLeave}
                     onOpen={handlers.onOpen}
@@ -350,11 +354,7 @@ export function TierBoard({
   // hasn't re-ranked it since. The popover is interactive (long change lists scroll), so leaving
   // the badge schedules a close that moving into the popover cancels.
   const patchFor = useCallback(
-    (slug: string): HeroPatch | null => {
-      const hp = patchForHero(slug)
-      if (!hp) return null
-      return isStaleForPatch(data[viewed][slug]?.patchVersion) ? hp : null
-    },
+    (slug: string): PatchBadge | null => patchBadge(slug, data[viewed][slug]?.patchVersion),
     [data, viewed],
   )
   const [patchHover, setPatchHover] = useState<{ slug: string; rect: DOMRect } | null>(null)
@@ -537,7 +537,7 @@ export function TierBoard({
               <div className="flex min-h-[150px] flex-1 flex-wrap content-start gap-3 p-4">
                 {containers[tier.id].map((slug) => {
                   const hero = heroBySlug.get(slug)
-                  return hero ? <TileVisual key={slug} hero={hero} patch={patchFor(slug)} /> : null
+                  return hero ? <TileVisual key={slug} hero={hero} badge={patchFor(slug)} /> : null
                 })}
               </div>
             </div>
@@ -563,7 +563,7 @@ export function TierBoard({
                   <div className="flex flex-wrap gap-3">
                     {slugs.map((slug) => {
                       const hero = heroBySlug.get(slug)
-                      return hero ? <TileVisual key={slug} hero={hero} patch={patchFor(slug)} /> : null
+                      return hero ? <TileVisual key={slug} hero={hero} badge={patchFor(slug)} /> : null
                     })}
                   </div>
                 </section>
@@ -724,7 +724,7 @@ function PatchPopover({
           <Image src={portraitUrl(hero.slug)} alt="" fill sizes="48px" className="object-cover" />
         </div>
         <p className="text-lg font-bold text-ink">{hero.name}</p>
-        <span className="ml-auto text-sm font-semibold text-[#e7c15a]">Updated · {PATCH_VERSION}</span>
+        <span className="ml-auto text-sm font-semibold text-[#e7c15a]">Updated · {patch.changedIn}</span>
       </div>
       <div className="space-y-4 overflow-y-auto px-5 py-4">
         {patch.sections.map((section) => {

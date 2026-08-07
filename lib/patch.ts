@@ -10,16 +10,27 @@ import { ABILITIES } from './abilities.generated'
 export type ChangeKind = 'ADDED' | 'CHANGED' | 'REMOVED' | 'REWORKED'
 export type Change = { kind: ChangeKind; text: string }
 export type AbilitySection = { ability: string; changes: Change[] }
-export type HeroPatch = { sections: AbilitySection[] }
+/** `changedIn` = the patch this hero was last changed in (a value from PATCH_SEQUENCE). */
+export type HeroPatch = { changedIn: string; sections: AbilitySection[] }
 
-export const PATCH_VERSION = '1.03E'
-/** Patch release date (31.07.2026). Rankings older than this are "stale" for the changed heroes. */
-export const PATCH_DATE = '2026-07-31'
+export const PATCH_VERSION = '1.03F'
+/** Current patch release date (07.08.2026). */
+export const PATCH_DATE = '2026-08-07'
+
+/**
+ * The patches we track, oldest → newest. A hero keeps its badge until the person re-ranks it under
+ * a patch at least as new as the one it last changed in — so a hero changed in 1.03E they still
+ * haven't played keeps showing an (older-patch) badge even after 1.03F lands. When a new patch
+ * drops: append it here, bump PATCH_VERSION/PATCH_DATE, keep the still-relevant older heroes, and
+ * add/override the newly-changed ones with `changedIn` set to the new version.
+ */
+export const PATCH_SEQUENCE = ['1.03E', '1.03F'] as const
 
 const C = (kind: ChangeKind, text: string): Change => ({ kind, text })
 
 export const PATCH_HEROES: Record<string, HeroPatch> = {
   crystal_maiden: {
+    changedIn: '1.03E',
     sections: [
       {
         ability: 'Blueheart Floe',
@@ -74,6 +85,7 @@ export const PATCH_HEROES: Record<string, HeroPatch> = {
   },
 
   slardar: {
+    changedIn: '1.03E',
     sections: [
       { ability: 'Corrosive Haze', changes: [C('CHANGED', 'Armor reduction: 10/15/20 → 20/26/32.')] },
       {
@@ -95,6 +107,7 @@ export const PATCH_HEROES: Record<string, HeroPatch> = {
   },
 
   undying: {
+    changedIn: '1.03E',
     sections: [
       {
         ability: 'Soul Rip',
@@ -120,6 +133,7 @@ export const PATCH_HEROES: Record<string, HeroPatch> = {
   },
 
   batrider: {
+    changedIn: '1.03E',
     sections: [
       {
         ability: 'Firefly',
@@ -129,6 +143,7 @@ export const PATCH_HEROES: Record<string, HeroPatch> = {
   },
 
   marci: {
+    changedIn: '1.03E',
     sections: [
       {
         ability: 'Dispose',
@@ -161,6 +176,7 @@ export const PATCH_HEROES: Record<string, HeroPatch> = {
   },
 
   tidehunter: {
+    changedIn: '1.03E',
     sections: [
       {
         ability: 'Anchor Smash',
@@ -189,6 +205,7 @@ export const PATCH_HEROES: Record<string, HeroPatch> = {
   },
 
   ursa: {
+    changedIn: '1.03E',
     sections: [
       {
         ability: 'Earthshock',
@@ -215,6 +232,53 @@ export const PATCH_HEROES: Record<string, HeroPatch> = {
       },
     ],
   },
+
+  centaur: {
+    changedIn: '1.03F',
+    sections: [
+      {
+        ability: 'Hoof Stomp',
+        changes: [
+          C('CHANGED', 'Added base damage; now Strength-scaled. Base damage added: 170/250/330/410.'),
+          C('CHANGED', 'Cooldown: 14/13/12/11 → 11s.'),
+          C('CHANGED', 'Damage: 15/20/25/30% → 390/540/690/840%.'),
+          C('CHANGED', 'Shard [Earth Trample] fixed (spike count no longer decays); Count2: 3 → 6.'),
+          C('CHANGED', 'Shard [Centaur Pounce!] Count: 2 → 3; leap distance: 250 → 200.'),
+          C('CHANGED', 'Shard [Power Convergence] bonus Str: 40 → 80.'),
+        ],
+      },
+      {
+        ability: 'Stampede',
+        changes: [
+          C('CHANGED', 'Added base damage: 300/450/600.'),
+          C('CHANGED', 'Cooldown: 80/70/60 → 50s (all levels).'),
+          C('CHANGED', 'Duration: 4/5/6 → 8/9/10s. Hit cooldown: 3.5 → 1.5s.'),
+          C('CHANGED', 'Damage: 450/600/750% → 600/800/1000%.'),
+          C('CHANGED', 'Trample radius: 105 → 250 (no longer scales with range).'),
+          C('CHANGED', 'Duration + Bonus Move Speed upgrades merged; Trample Radius upgrade removed.'),
+          C('CHANGED', 'Shard [Galloping Charge] distance: 600 → 400; cooldown reduction: 1.2 → 0.6s; trigger: 35% → 55%.'),
+        ],
+      },
+      {
+        ability: 'Talents',
+        changes: [
+          C('CHANGED', 'Stampede Cooldown Reduction: -15s → -10s.'),
+          C('CHANGED', 'Hoof Stomp Bonus Damage: +6% → +200%.'),
+          C('CHANGED', 'Stampede Damage Cooldown: -1s → -0.5s.'),
+        ],
+      },
+    ],
+  },
+
+  spirit_breaker: {
+    changedIn: '1.03F',
+    sections: [
+      {
+        ability: 'New Hero',
+        changes: [C('ADDED', 'Spirit Breaker was added to the game in 1.03F.')],
+      },
+    ],
+  },
 }
 
 export function patchForHero(slug: string): HeroPatch | undefined {
@@ -237,12 +301,25 @@ export function abilityIconName(heroSlug: string, abilityName: string): string |
   return icon
 }
 
+/** Where a patch version sits in the tracked sequence; -1 = never ranked / older than we track. */
+function ordinal(version: string | null | undefined): number {
+  return version ? (PATCH_SEQUENCE as readonly string[]).indexOf(version) : -1
+}
+
+export type PatchBadge = { patch: HeroPatch; current: boolean }
+
 /**
- * True when a ranking hasn't been touched under the current patch (or doesn't exist yet), so the
- * changed hero still needs a fresh look. Each ranking stores the patch version it was last set
- * under; re-ranking stamps the current version and clears the badge. Version-based rather than
- * date-based so it can't be fooled by clock skew between the patch date and "now".
+ * The badge to show for a hero given the patch the viewer last ranked it under, or null. It stays
+ * while the ranking predates the hero's most recent change (version-based, so clock skew can't fool
+ * it). `current` is true when the hero changed in THIS patch, false when it changed in an earlier
+ * one the viewer still hasn't re-ranked — the board colours the two differently.
  */
-export function isStaleForPatch(rankedUnderPatch: string | null | undefined): boolean {
-  return rankedUnderPatch !== PATCH_VERSION
+export function patchBadge(
+  heroSlug: string,
+  rankedUnderPatch: string | null | undefined,
+): PatchBadge | null {
+  const hp = PATCH_HEROES[heroSlug]
+  if (!hp) return null
+  if (ordinal(rankedUnderPatch) >= ordinal(hp.changedIn)) return null
+  return { patch: hp, current: hp.changedIn === PATCH_VERSION }
 }
