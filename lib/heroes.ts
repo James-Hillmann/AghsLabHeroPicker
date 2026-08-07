@@ -295,6 +295,20 @@ export const HEROES: Hero[] = [
     ],
   },
   {
+    slug: 'spirit_breaker',
+    name: 'Spirit Breaker',
+    attribute: 'strength',
+    // Read from the mod's own hero_abilities.kv (workshop item 2483181385). The mod adds an
+    // innate, Thousandweight Stride, which defines no texture, so it carries no valveId.
+    abilities: [
+      { name: 'Thousandweight Stride' },
+      { name: 'Charge of Darkness', valveId: 'spirit_breaker_charge_of_darkness' },
+      { name: 'Bulldoze', valveId: 'spirit_breaker_bulldoze' },
+      { name: 'Greater Bash', valveId: 'spirit_breaker_greater_bash' },
+      { name: 'Nether Strike', valveId: 'spirit_breaker_nether_strike' },
+    ],
+  },
+  {
     slug: 'juggernaut',
     name: 'Juggernaut',
     attribute: 'agility',
@@ -907,6 +921,7 @@ const ALIASES: Record<string, string[]> = {
   chaos_knight: ['ck'],
   bristleback: ['bristle'],
   night_stalker: ['ns'],
+  spirit_breaker: ['bara'], // "sb" already falls out of the initials
   centaur: ['centaur'], // Centaur Warrunner
   rattletrap: ['clock'], // Clockwerk
   dragon_knight: ['dk'],
