@@ -16,12 +16,13 @@ export function SiteHeader({ author }: { author: Author }) {
 
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-[color-mix(in_srgb,var(--bg)_88%,transparent)] backdrop-blur-md">
-      <div className="mx-auto flex h-16 w-full max-w-6xl items-center gap-8 px-5">
-        <Link href="/tiers" className="text-lg font-bold tracking-tight text-ink">
+      {/* Mobile: two rows — brand + account on top, full-width nav pills below. sm+: one row. */}
+      <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center gap-x-3 gap-y-2 px-4 py-2.5 sm:h-16 sm:flex-nowrap sm:gap-8 sm:px-5 sm:py-0">
+        <Link href="/tiers" className="order-1 text-lg font-bold tracking-tight text-ink">
           Hero&nbsp;Picker
         </Link>
 
-        <nav className="flex items-center gap-2">
+        <nav className="order-3 flex w-full items-center gap-2 sm:order-2 sm:w-auto">
           {TABS.map((tab) => {
             const active = pathname === tab.href
             return (
@@ -29,7 +30,7 @@ export function SiteHeader({ author }: { author: Author }) {
                 key={tab.href}
                 href={tab.href}
                 aria-current={active ? 'page' : undefined}
-                className={`rounded-full px-4 py-2 text-base font-medium transition-colors ${
+                className={`flex-1 rounded-full px-4 py-2 text-center text-base font-medium transition-colors sm:flex-none sm:text-left ${
                   active
                     ? 'bg-[var(--accent-soft)] text-ink'
                     : 'text-dim hover:bg-white/5 hover:text-ink'
@@ -41,7 +42,7 @@ export function SiteHeader({ author }: { author: Author }) {
           })}
         </nav>
 
-        <div className="ml-auto flex items-center gap-4">
+        <div className="order-2 ml-auto flex items-center gap-3 sm:order-3 sm:gap-4">
           <span className="flex items-center gap-2 text-base text-dim">
             <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: AUTHOR_COLOR[author] }} />
             {AUTHOR_NAME[author]}

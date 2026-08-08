@@ -196,18 +196,19 @@ function Lane({
 }) {
   const { setNodeRef } = useContainerDroppable(tier.id)
   return (
-    <div className="card flex overflow-hidden">
+    // Mobile: tier label as a bar on top, heroes below. sm+: label as the left column.
+    <div className="card flex flex-col overflow-hidden sm:flex-row">
       <div
-        className="flex w-44 shrink-0 flex-col justify-center gap-1 px-5 py-5"
+        className="flex shrink-0 flex-wrap items-baseline gap-x-2.5 gap-y-0.5 px-4 py-2.5 sm:w-44 sm:flex-col sm:flex-nowrap sm:justify-center sm:gap-1 sm:px-5 sm:py-5"
         style={{ backgroundColor: `color-mix(in srgb, ${tier.color} 15%, transparent)` }}
       >
-        <p className="text-xl font-bold" style={{ color: tier.color }}>
+        <p className="text-lg font-bold sm:text-xl" style={{ color: tier.color }}>
           {tier.label}
         </p>
         <p className="text-sm text-dim">{tier.blurb}</p>
       </div>
       <SortableContext items={slugs} strategy={rectSortingStrategy}>
-        <div ref={setNodeRef} className="flex min-h-[150px] flex-1 flex-wrap content-start gap-3 p-4">
+        <div ref={setNodeRef} className="flex min-h-[110px] flex-1 flex-wrap content-start gap-3 p-4 sm:min-h-[150px]">
           {slugs.map((slug) => {
             const hero = heroBySlug.get(slug)
             return hero ? (
@@ -524,17 +525,17 @@ export function TierBoard({
         </div>
         <div className="space-y-3">
           {TIERS.map((tier) => (
-            <div key={tier.id} className="card flex overflow-hidden">
+            <div key={tier.id} className="card flex flex-col overflow-hidden sm:flex-row">
               <div
-                className="flex w-44 shrink-0 flex-col justify-center gap-1 px-5 py-5"
+                className="flex shrink-0 flex-wrap items-baseline gap-x-2.5 gap-y-0.5 px-4 py-2.5 sm:w-44 sm:flex-col sm:flex-nowrap sm:justify-center sm:gap-1 sm:px-5 sm:py-5"
                 style={{ backgroundColor: `color-mix(in srgb, ${tier.color} 15%, transparent)` }}
               >
-                <p className="text-xl font-bold" style={{ color: tier.color }}>
+                <p className="text-lg font-bold sm:text-xl" style={{ color: tier.color }}>
                   {tier.label}
                 </p>
                 <p className="text-sm text-dim">{tier.blurb}</p>
               </div>
-              <div className="flex min-h-[150px] flex-1 flex-wrap content-start gap-3 p-4">
+              <div className="flex min-h-[110px] flex-1 flex-wrap content-start gap-3 p-4 sm:min-h-[150px]">
                 {containers[tier.id].map((slug) => {
                   const hero = heroBySlug.get(slug)
                   return hero ? <TileVisual key={slug} hero={hero} badge={patchFor(slug)} /> : null

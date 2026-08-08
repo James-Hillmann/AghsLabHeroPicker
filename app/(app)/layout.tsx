@@ -8,7 +8,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <>
       <SiteHeader author={author} />
-      <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-6">{children}</main>
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-5 sm:px-5 sm:py-6">{children}</main>
     </>
   )
 }
