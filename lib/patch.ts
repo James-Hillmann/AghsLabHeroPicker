@@ -13,9 +13,9 @@ export type AbilitySection = { ability: string; changes: Change[] }
 /** `changedIn` = the patch this hero was last changed in (a value from PATCH_SEQUENCE). */
 export type HeroPatch = { changedIn: string; sections: AbilitySection[] }
 
-export const PATCH_VERSION = '1.03F'
-/** Current patch release date (07.08.2026). */
-export const PATCH_DATE = '2026-08-07'
+export const PATCH_VERSION = '1.03G'
+/** Current patch release date (14.08.2026). */
+export const PATCH_DATE = '2026-08-14'
 
 /**
  * The patches we track, oldest → newest. A hero keeps its badge until the person re-ranks it under
@@ -24,7 +24,7 @@ export const PATCH_DATE = '2026-08-07'
  * drops: append it here, bump PATCH_VERSION/PATCH_DATE, keep the still-relevant older heroes, and
  * add/override the newly-changed ones with `changedIn` set to the new version.
  */
-export const PATCH_SEQUENCE = ['1.03E', '1.03F'] as const
+export const PATCH_SEQUENCE = ['1.03E', '1.03F', '1.03G'] as const
 
 const C = (kind: ChangeKind, text: string): Change => ({ kind, text })
 
@@ -271,11 +271,107 @@ export const PATCH_HEROES: Record<string, HeroPatch> = {
   },
 
   spirit_breaker: {
-    changedIn: '1.03F',
+    changedIn: '1.03G',
     sections: [
       {
         ability: 'New Hero',
         changes: [C('ADDED', 'Spirit Breaker was added to the game in 1.03F.')],
+      },
+      {
+        ability: 'Charge of Darkness',
+        changes: [
+          C('CHANGED', 'Mana cost: 20 + 3% → 12 + 2%.'),
+          C('CHANGED', 'Slow on hitting an enemy: 10% → 8%.'),
+          C('CHANGED', 'Slow on hitting terrain: 200 + 10% → 120 + 6%.'),
+          C('CHANGED', 'Shard [Ghost Drift] max kinetic energy stored: 2000 → 4000.'),
+        ],
+      },
+    ],
+  },
+
+  huskar: {
+    changedIn: '1.03G',
+    sections: [
+      {
+        ability: 'Inner Fire',
+        changes: [C('CHANGED', 'Shard [Scorch] repeat power: 50% → 65%.')],
+      },
+      {
+        ability: 'Life Break',
+        changes: [
+          C('CHANGED', 'Shard [Blazing Train] power: 50% → 65%.'),
+          C('CHANGED', 'Shard [Immolation] power: 200% → 250%.'),
+        ],
+      },
+    ],
+  },
+
+  void_spirit: {
+    changedIn: '1.03G',
+    sections: [
+      {
+        ability: 'Intrinsic Edge',
+        changes: [
+          C('REWORKED', 'Replaces the previous innate: 20/23/26/30% chance to critically strike for 160% damage; each crit grants a stacking 2% All-Attribute calculation bonus for 15s, up to 99 stacks. Scaled vs Leaders (140%) and Bosses (200%). Old flat Base Attack bonus (15) and Secondary Stat Bonus (25%) removed.'),
+        ],
+      },
+      {
+        ability: 'Aether Remnant',
+        changes: [
+          C('CHANGED', 'Cooldown: 6/5.5/5/4.5 → 6s (all levels). Mana cost: 50/60/70/80 → 45/50/55/60.'),
+          C('CHANGED', 'Damage: 80/130/180/230 → 110/170/230/290. Bonus Damage: 80/120/160/200% → 100/150/200/250%.'),
+          C('CHANGED', 'Common upgrade Bonus Damage: 40% → 70%. Common upgrade Damage: 50 → 55.'),
+          C('REMOVED', 'Pull Duration bonus upgrade removed.'),
+          C('CHANGED', 'Shard [Discovered Attack] (renamed from Phantom Strike): the Astral Step it triggers now always crits, and its mark also deals damage.'),
+          C('CHANGED', 'Shard [Relative Pin] (renamed from Reversal Force): no longer knocks back; instead slows Movement Speed and reduces Magic Armor. Damage: 100% → 85%.'),
+          C('CHANGED', 'Shard [Outpost] (renamed from Planar Sentry): radius 50% → 60%; DPS 20% → 30%; can trigger Shard [Discovered Attack]; max 20 sentries.'),
+          C('CHANGED', 'Shard [Piece Coordination] (renamed from Blinking Remnant): now gains charges; Shard [Outpost] responds to it. Damage: 90% → 60%.'),
+          C('REMOVED', 'Shard [Deep Projection] removed.'),
+        ],
+      },
+      {
+        ability: 'Dissimilate',
+        changes: [
+          C('CHANGED', 'Mana cost: 120 → 90. No longer benefits from cast-range/AoE bonuses.'),
+          C('ADDED', 'Hitting an enemy raises Intrinsic Edge crit chance by 80% for 3s; missing dispels and heals self for 25 instead.'),
+          C('CHANGED', 'Shard [Castling] (renamed from Transposition): damage 30% → 50%; benefits from Dissimilate\'s own buffs and grants it bonus final damage; can trigger Shards [Space Advantage] and [Combination].'),
+          C('CHANGED', 'Shard [Combination] (renamed from Triple Echo): Aether Remnant damage 100% → 200%; now centers on the burst circle.'),
+          C('CHANGED', 'Shard [Space Advantage] (renamed from Void Ring): Resonant Pulse damage 100% → 200%. Radius: 100% → 125%.'),
+          C('REMOVED', 'Shard [Expansion] removed.'),
+        ],
+      },
+      {
+        ability: 'Resonant Pulse',
+        changes: [
+          C('CHANGED', 'Mana cost: 80/90/100/110 → 75/80/85/90.'),
+          C('CHANGED', 'Base Damage Barrier: 50/75/100/125 → 80/130/180/230. Barrier per hero hit: 35/50/65/80 → 40/60/80/100 (common upgrade 20 → 15).'),
+          C('CHANGED', 'Damage: 70/130/190/250 → 100/150/200/250. Bonus Damage: 70/120/170/220% → 100/140/180/220%.'),
+          C('CHANGED', 'Now capped in shield instances; exceeding it destroys the oldest shield.'),
+          C('CHANGED', 'Shard [Deflection] (renamed from Power of Nothingness): its Astral Step always crits, no longer needs an active cast. Knockback: 300 → 150.'),
+          C('CHANGED', 'Shard [Sacrifice] (renamed from Void Burst): shield always explodes, more if broken by damage; explosion scales off Resonant Pulse damage, not remaining shield. Range: 100% → 120%.'),
+          C('CHANGED', 'Shard [Gaining a Tempo] (renamed from Star Ring Pulse): detection range 400 → 700; release interval 15 → 8s; cooldown reduction per unit spell cast 0.5 → 1s.'),
+        ],
+      },
+      {
+        ability: 'Astral Step',
+        changes: [
+          C('CHANGED', 'Astral Mark Damage: 200/300/400 → 220/290/360. Astral Mark Bonus Damage: 230/270/310% → 190/250/310%.'),
+          C('CHANGED', 'Common upgrade Astral Mark Damage: 90 → 80; Bonus Damage: 45% → 55%.'),
+          C('CHANGED', 'Shard [Driving Away] (renamed from Lightspeed Rending): also reduces enemy Magic Armor. Stun: 1 → 1.5s.'),
+          C('CHANGED', 'Shard [Accumulation of Advantages] (renamed from Turbulent Void): reworked — each Astral Mark hit permanently increases that target\'s damage taken from Astral Mark, up to a cap (was radius damage).'),
+          C('CHANGED', 'Shard [Double Attack] renamed from [Astral Weapon]; Shard [Initiative] renamed from [Planar Conjugation].'),
+        ],
+      },
+      {
+        ability: 'Talents',
+        changes: [
+          C('CHANGED', 'Aether Remnant Damage: +50/40% → +70/55%.'),
+          C('CHANGED', '"Dissimilate roots for 2s" → "+1 Astral Step Charge".'),
+          C('CHANGED', '"Resonant Pulse grants an all-damage barrier" → "-1s Resonant Pulse Cooldown".'),
+          C('CHANGED', '"+1 Astral Step Charge" → "+70 Aether Remnant Catch Distance".'),
+          C('CHANGED', '"200% Astral Step Critical Strike" → "Dissimilate buff grants 50% Armor and Magic Resistance penetration".'),
+          C('CHANGED', '"+200 Resonant Pulse Radius" → "+7s Intrinsic Edge Buff Duration".'),
+        ],
       },
     ],
   },
