@@ -6,7 +6,7 @@
 // Not 'server-only': the badge and its hover popover render in the browser.
 
 import { ABILITIES } from './abilities.generated'
-import { getHeroes } from './heroes'
+import { abilityIconUrl, getHeroes } from './heroes'
 
 export type ChangeKind = 'ADDED' | 'CHANGED' | 'REMOVED' | 'REWORKED'
 export type Change = { kind: ChangeKind; text: string }
@@ -262,10 +262,11 @@ export const PATCH_HEROES: Record<string, HeroPatch> = {
       },
       {
         ability: 'Talents',
+        // Levels read from the VPK's talent tree slots (Ability10–17 pairs = 10/15/20/25).
         changes: [
-          C('CHANGED', 'Stampede Cooldown Reduction: -15s → -10s.'),
-          C('CHANGED', 'Hoof Stomp Bonus Damage: +6% → +200%.'),
-          C('CHANGED', 'Stampede Damage Cooldown: -1s → -0.5s.'),
+          C('CHANGED', 'Lv 20: Stampede Cooldown Reduction: -15s → -10s.'),
+          C('CHANGED', 'Lv 25: Hoof Stomp Bonus Damage: +6% → +200%.'),
+          C('CHANGED', 'Lv 25: Stampede Damage Cooldown: -1s → -0.5s.'),
         ],
       },
     ],
@@ -365,13 +366,14 @@ export const PATCH_HEROES: Record<string, HeroPatch> = {
       },
       {
         ability: 'Talents',
+        // Levels read from the VPK's talent tree slots (Ability10–17 pairs = 10/15/20/25).
         changes: [
-          C('CHANGED', 'Aether Remnant Damage: +50/40% → +70/55%.'),
-          C('CHANGED', '"Dissimilate roots for 2s" → "+1 Astral Step Charge".'),
-          C('CHANGED', '"Resonant Pulse grants an all-damage barrier" → "-1s Resonant Pulse Cooldown".'),
-          C('CHANGED', '"+1 Astral Step Charge" → "+70 Aether Remnant Catch Distance".'),
-          C('CHANGED', '"200% Astral Step Critical Strike" → "Dissimilate buff grants 50% Armor and Magic Resistance penetration".'),
-          C('CHANGED', '"+200 Resonant Pulse Radius" → "+7s Intrinsic Edge Buff Duration".'),
+          C('CHANGED', 'Lv 10: Aether Remnant Damage: +50/40% → +70/55%.'),
+          C('CHANGED', 'Lv 15: "Dissimilate roots for 2s" → "+1 Astral Step Charge".'),
+          C('CHANGED', 'Lv 20: "Resonant Pulse grants an all-damage barrier" → "-1s Resonant Pulse Cooldown".'),
+          C('CHANGED', 'Lv 20: "+1 Astral Step Charge" → "+70 Aether Remnant Catch Distance".'),
+          C('CHANGED', 'Lv 25: "200% Astral Step Critical Strike" → "Dissimilate buff grants 50% Armor and Magic Resistance penetration".'),
+          C('CHANGED', 'Lv 25: "+200 Resonant Pulse Radius" → "+7s Intrinsic Edge Buff Duration".'),
         ],
       },
     ],
@@ -383,26 +385,42 @@ export function patchForHero(slug: string): HeroPatch | undefined {
 }
 
 /**
- * The Valve icon name for a changed ability, looked up from the ability catalogue by hero + name
- * so the popover can show the same art as the rest of the app. Heroes missing from the stale
- * catalogue (added after its last regeneration, e.g. Huskar and Spirit Breaker) fall back to the
- * roster's valveIds in heroes.ts — verified against the VPK's own texture names. null when the
- * ability has no icon (e.g. a mod innate). Cached since the popover asks repeatedly.
+ * Dota's generic innate icon, the same picture the game shows for every innate. The mod's
+ * innates use workshop-custom textures that aren't on Valve's CDN, so this stands in for all
+ * of them — matching what the game itself renders in the talent/ability strip.
+ */
+const INNATE_ICON_URL =
+  'https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/icons/innate_icon.png'
+
+/** Innates of heroes the stale catalogue predates, which it therefore can't flag itself. */
+const KNOWN_INNATES = new Set(['huskar|Blood Magic', 'spirit_breaker|Thousandweight Stride'])
+
+/**
+ * The icon URL for a changed ability, looked up from the ability catalogue by hero + name so
+ * the popover can show the same art as the rest of the app. Heroes missing from the stale
+ * catalogue (added after its last regeneration, e.g. Huskar and Spirit Breaker) fall back to
+ * the roster's valveIds in heroes.ts — verified against the VPK's own texture names. Innates
+ * get Dota's generic innate icon, as in-game. null for section headers that aren't abilities
+ * (e.g. "Talents"). Cached since the popover asks repeatedly.
  */
 const iconCache = new Map<string, string | null>()
-export function abilityIconName(heroSlug: string, abilityName: string): string | null {
+export function abilityIconSrc(heroSlug: string, abilityName: string): string | null {
   const key = `${heroSlug}|${abilityName}`
   const cached = iconCache.get(key)
   if (cached !== undefined) return cached
   const ability = ABILITIES.find((a) => a.hero === heroSlug && a.name === abilityName)
-  const icon =
+  const valveId =
     ability?.iconName ??
     getHeroes()
       .find((h) => h.slug === heroSlug)
-      ?.abilities?.find((a) => a.name === abilityName)?.valveId ??
-    null
-  iconCache.set(key, icon)
-  return icon
+      ?.abilities?.find((a) => a.name === abilityName)?.valveId
+  const src = valveId
+    ? abilityIconUrl(valveId)
+    : ability?.path.startsWith('innate') || KNOWN_INNATES.has(key)
+      ? INNATE_ICON_URL
+      : null
+  iconCache.set(key, src)
+  return src
 }
 
 /** Where a patch version sits in the tracked sequence; -1 = never ranked / older than we track. */

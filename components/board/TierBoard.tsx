@@ -24,7 +24,7 @@ import { AUTHOR_NAME, AUTHORS, type Author } from '@/lib/authors'
 import { abilityIconUrl, ATTRIBUTES, ATTRIBUTE_COLOR, portraitUrl, type Attribute } from '@/lib/heroes'
 import { type Build } from '@/lib/rankings'
 import { setTier } from '@/app/actions/rankings'
-import { abilityIconName, patchBadge, PATCH_VERSION, patchForHero, type PatchBadge } from '@/lib/patch'
+import { abilityIconSrc, patchBadge, PATCH_VERSION, patchForHero, type PatchBadge } from '@/lib/patch'
 import { TIERS, TIER_IDS, type TierId } from '@/lib/tiers'
 import { BuildCard } from './BuildCard'
 
@@ -729,13 +729,13 @@ function PatchPopover({
       </div>
       <div className="space-y-4 overflow-y-auto px-5 py-4">
         {patch.sections.map((section) => {
-          const icon = abilityIconName(hero.slug, section.ability)
+          const icon = abilityIconSrc(hero.slug, section.ability)
           return (
           <div key={section.ability}>
             <div className="mb-1.5 flex items-center gap-2">
               {icon ? (
                 <Image
-                  src={abilityIconUrl(icon)}
+                  src={icon}
                   alt=""
                   width={28}
                   height={28}
