@@ -727,7 +727,7 @@ function PatchPopover({
         <p className="text-lg font-bold text-ink">{hero.name}</p>
         <span className="ml-auto text-sm font-semibold text-[#e7c15a]">Updated · {patch.changedIn}</span>
       </div>
-      <div className="space-y-4 overflow-y-auto px-5 py-4">
+      <div className="space-y-4 overflow-y-auto overscroll-contain px-5 py-4">
         {patch.sections.map((section) => {
           const icon = abilityIconSrc(hero.slug, section.ability)
           return (
