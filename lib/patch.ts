@@ -6,6 +6,7 @@
 // Not 'server-only': the badge and its hover popover render in the browser.
 
 import { ABILITIES } from './abilities.generated'
+import { getHeroes } from './heroes'
 
 export type ChangeKind = 'ADDED' | 'CHANGED' | 'REMOVED' | 'REWORKED'
 export type Change = { kind: ChangeKind; text: string }
@@ -383,8 +384,10 @@ export function patchForHero(slug: string): HeroPatch | undefined {
 
 /**
  * The Valve icon name for a changed ability, looked up from the ability catalogue by hero + name
- * so the popover can show the same art as the rest of the app. null when the ability has no icon
- * (e.g. a mod innate). Cached since the popover asks repeatedly.
+ * so the popover can show the same art as the rest of the app. Heroes missing from the stale
+ * catalogue (added after its last regeneration, e.g. Huskar and Spirit Breaker) fall back to the
+ * roster's valveIds in heroes.ts — verified against the VPK's own texture names. null when the
+ * ability has no icon (e.g. a mod innate). Cached since the popover asks repeatedly.
  */
 const iconCache = new Map<string, string | null>()
 export function abilityIconName(heroSlug: string, abilityName: string): string | null {
@@ -392,7 +395,12 @@ export function abilityIconName(heroSlug: string, abilityName: string): string |
   const cached = iconCache.get(key)
   if (cached !== undefined) return cached
   const ability = ABILITIES.find((a) => a.hero === heroSlug && a.name === abilityName)
-  const icon = ability?.iconName ?? null
+  const icon =
+    ability?.iconName ??
+    getHeroes()
+      .find((h) => h.slug === heroSlug)
+      ?.abilities?.find((a) => a.name === abilityName)?.valveId ??
+    null
   iconCache.set(key, icon)
   return icon
 }
