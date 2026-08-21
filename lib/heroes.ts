@@ -309,6 +309,22 @@ export const HEROES: Hero[] = [
     ],
   },
   {
+    slug: 'skeleton_king',
+    name: 'Wraith King',
+    attribute: 'strength',
+    // Read from the mod's own hero_abilities.kv (workshop item 2483181385). Wraith (the
+    // death-defying form) defines no texture, so it carries no valveId; Recall is the mod's
+    // sixth ability and reuses Reincarnation's art in the game files.
+    abilities: [
+      { name: 'Wraithfire Blast', valveId: 'skeleton_king_hellfire_blast' },
+      { name: 'Bone Guard', valveId: 'skeleton_king_bone_guard' },
+      { name: 'Mortal Strike', valveId: 'skeleton_king_mortal_strike' },
+      { name: 'Wraith' },
+      { name: 'Recall', valveId: 'skeleton_king_reincarnation' },
+      { name: 'Reincarnation', valveId: 'skeleton_king_reincarnation' },
+    ],
+  },
+  {
     slug: 'juggernaut',
     name: 'Juggernaut',
     attribute: 'agility',
@@ -922,6 +938,7 @@ const ALIASES: Record<string, string[]> = {
   bristleback: ['bristle'],
   night_stalker: ['ns'],
   spirit_breaker: ['bara'], // "sb" already falls out of the initials
+  skeleton_king: ['sk', 'skeleton king'], // slug is Valve's old name; "wk" falls out of the initials
   centaur: ['centaur'], // Centaur Warrunner
   rattletrap: ['clock'], // Clockwerk
   dragon_knight: ['dk'],

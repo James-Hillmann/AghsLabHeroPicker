@@ -14,9 +14,9 @@ export type AbilitySection = { ability: string; changes: Change[] }
 /** `changedIn` = the patch this hero was last changed in (a value from PATCH_SEQUENCE). */
 export type HeroPatch = { changedIn: string; sections: AbilitySection[] }
 
-export const PATCH_VERSION = '1.03G'
-/** Current patch release date (14.08.2026). */
-export const PATCH_DATE = '2026-08-14'
+export const PATCH_VERSION = '1.03H'
+/** Current patch release date (20.08.2026). */
+export const PATCH_DATE = '2026-08-20'
 
 /**
  * The patches we track, oldest → newest. A hero keeps its badge until the person re-ranks it under
@@ -25,7 +25,7 @@ export const PATCH_DATE = '2026-08-14'
  * drops: append it here, bump PATCH_VERSION/PATCH_DATE, keep the still-relevant older heroes, and
  * add/override the newly-changed ones with `changedIn` set to the new version.
  */
-export const PATCH_SEQUENCE = ['1.03E', '1.03F', '1.03G'] as const
+export const PATCH_SEQUENCE = ['1.03E', '1.03F', '1.03G', '1.03H'] as const
 
 const C = (kind: ChangeKind, text: string): Change => ({ kind, text })
 
@@ -374,6 +374,51 @@ export const PATCH_HEROES: Record<string, HeroPatch> = {
           C('CHANGED', 'Lv 20: "+1 Astral Step Charge" → "+70 Aether Remnant Catch Distance".'),
           C('CHANGED', 'Lv 25: "200% Astral Step Critical Strike" → "Dissimilate buff grants 50% Armor and Magic Resistance penetration".'),
           C('CHANGED', 'Lv 25: "+200 Resonant Pulse Radius" → "+7s Intrinsic Edge Buff Duration".'),
+        ],
+      },
+    ],
+  },
+
+  skeleton_king: {
+    changedIn: '1.03H',
+    // Kit read straight from the VPK (arakunido hadn't covered this patch yet).
+    sections: [
+      {
+        ability: 'New Hero',
+        changes: [C('ADDED', 'Wraith King was added to the game in 1.03H.')],
+      },
+      {
+        ability: 'Wraithfire Blast',
+        changes: [C('ADDED', 'Fan-shaped Wraith Shock that stuns and applies Wraith Marks — nearer enemies get more. Marks last indefinitely with no cap, but only so many can be active at once.')],
+      },
+      {
+        ability: 'Bone Guard',
+        changes: [C('ADDED', 'Passive: several Bone Guards that respawn where they fell. Guards have Spectral Sword, attack lifesteal, and high magic armor and status resistance.')],
+      },
+      {
+        ability: 'Mortal Strike',
+        changes: [C('ADDED', 'Attacks have a chance to crit for greatly increased damage; every so often the next primary attack is a guaranteed crit.')],
+      },
+      {
+        ability: 'Wraith',
+        changes: [C('ADDED', 'On fatal damage, becomes a Wraith that cannot die and gains attack and movement speed. Dies when the form ends.')],
+      },
+      {
+        ability: 'Recall',
+        changes: [C('ADDED', "Recalls King's Remains to his side for a stack of +20% damage for 10s. Stacks have independent timers, up to 10.")],
+      },
+      {
+        ability: 'Reincarnation',
+        changes: [C('ADDED', 'If ready with enough mana when Wraith form ends, resurrects after 3s. Active cast enters Wraith form instantly. Nearby enemy deaths reduce the cooldown.')],
+      },
+      {
+        ability: 'Talents',
+        // Levels from the VPK talent tree slots (Ability10–17 pairs = 10/15/20/25).
+        changes: [
+          C('ADDED', 'Lv 10: +7% Bone Guard Damage / +35% Mortal Strike Multiplier.'),
+          C('ADDED', 'Lv 15: +20% Spectral Sword Detonation Multiplier / +6% Mortal Strike Chance.'),
+          C('ADDED', 'Lv 20: -0.6s Spectral Sword Delay / +15% Execution Multiplier.'),
+          C('ADDED', 'Lv 25: +100% Bone Guard Status Resistance / +40% Mortal Strike Multiplier (×).'),
         ],
       },
     ],
