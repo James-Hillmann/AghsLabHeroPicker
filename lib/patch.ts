@@ -14,9 +14,9 @@ export type AbilitySection = { ability: string; changes: Change[] }
 /** `changedIn` = the patch this hero was last changed in (a value from PATCH_SEQUENCE). */
 export type HeroPatch = { changedIn: string; sections: AbilitySection[] }
 
-export const PATCH_VERSION = '1.03H'
-/** Current patch release date (20.08.2026). */
-export const PATCH_DATE = '2026-08-20'
+export const PATCH_VERSION = '1.03I'
+/** Current patch release date (28.08.2026). */
+export const PATCH_DATE = '2026-08-28'
 
 /**
  * The patches we track, oldest → newest. A hero keeps its badge until the person re-ranks it under
@@ -25,7 +25,7 @@ export const PATCH_DATE = '2026-08-20'
  * drops: append it here, bump PATCH_VERSION/PATCH_DATE, keep the still-relevant older heroes, and
  * add/override the newly-changed ones with `changedIn` set to the new version.
  */
-export const PATCH_SEQUENCE = ['1.03E', '1.03F', '1.03G', '1.03H'] as const
+export const PATCH_SEQUENCE = ['1.03E', '1.03F', '1.03G', '1.03H', '1.03I'] as const
 
 const C = (kind: ChangeKind, text: string): Change => ({ kind, text })
 
@@ -380,7 +380,7 @@ export const PATCH_HEROES: Record<string, HeroPatch> = {
   },
 
   skeleton_king: {
-    changedIn: '1.03H',
+    changedIn: '1.03I',
     // Kit read straight from the VPK (arakunido hadn't covered this patch yet).
     sections: [
       {
@@ -389,7 +389,10 @@ export const PATCH_HEROES: Record<string, HeroPatch> = {
       },
       {
         ability: 'Wraithfire Blast',
-        changes: [C('ADDED', 'Fan-shaped Wraith Shock that stuns and applies Wraith Marks — nearer enemies get more. Marks last indefinitely with no cap, but only so many can be active at once.')],
+        changes: [
+          C('ADDED', 'Fan-shaped Wraith Shock that stuns and applies Wraith Marks — nearer enemies get more. Marks last indefinitely with no cap, but only so many can be active at once.'),
+          C('CHANGED', '1.03I: Radius now scales: 550 → 550/600/650/700.'),
+        ],
       },
       {
         ability: 'Bone Guard',
@@ -409,7 +412,10 @@ export const PATCH_HEROES: Record<string, HeroPatch> = {
       },
       {
         ability: 'Reincarnation',
-        changes: [C('ADDED', 'If ready with enough mana when Wraith form ends, resurrects after 3s. Active cast enters Wraith form instantly. Nearby enemy deaths reduce the cooldown.')],
+        changes: [
+          C('ADDED', 'If ready with enough mana when Wraith form ends, resurrects after 3s. Active cast enters Wraith form instantly. Nearby enemy deaths reduce the cooldown.'),
+          C('CHANGED', '1.03I: no longer usable after the stage ends — will not trigger its cooldown or resurrection.'),
+        ],
       },
       {
         ability: 'Talents',
@@ -419,6 +425,59 @@ export const PATCH_HEROES: Record<string, HeroPatch> = {
           C('ADDED', 'Lv 15: +20% Spectral Sword Detonation Multiplier / +6% Mortal Strike Chance.'),
           C('ADDED', 'Lv 20: -0.6s Spectral Sword Delay / +15% Execution Multiplier.'),
           C('ADDED', 'Lv 25: +100% Bone Guard Status Resistance / +40% Mortal Strike Multiplier (×).'),
+        ],
+      },
+    ],
+  },
+
+  death_prophet: {
+    changedIn: '1.03I',
+    // Read straight from the VPK (arakunido hadn't covered this patch yet).
+    sections: [
+      {
+        ability: 'Crypt Swarm',
+        changes: [
+          C('CHANGED', 'Damage: 120/180/240/300 → 85/130/175/220. Bonus Magic Damage: 17/20/23/26% → 85/120/155/190%.'),
+          C('CHANGED', 'Mana cost: 80/90/100/110 → 65/70/75/80.'),
+          C('CHANGED', 'Common upgrade: +70 Damage / +4% Bonus Magic Damage → +55 / +40%.'),
+          C('CHANGED', 'Lv 10 talent rescaled to match: +70/+4% → +55/+40%.'),
+        ],
+      },
+      {
+        ability: 'Silence',
+        changes: [
+          C('CHANGED', 'DPS: 35/50/65/80 → 50/70/90/110. Mana DPS: 4/5/6/7% → 35/55/75/95%.'),
+          C('CHANGED', 'Common upgrade: +15 DPS / +1% Mana DPS → +20 / +20%.'),
+          C('REMOVED', 'Epic [Homebound Souls] disabled (no longer offered).'),
+        ],
+      },
+      {
+        ability: 'Spirit Siphon',
+        changes: [
+          C('CHANGED', 'Damage per second: 10/12/14/16% → 18/21/24/27% (Lv 20 talent: +3% → +4%).'),
+          C('CHANGED', 'Common upgrade reworked: +1.5s Haunt Duration → +45 DPS / +4% DPS.'),
+        ],
+      },
+      {
+        ability: 'Exorcism',
+        changes: [
+          C('CHANGED', 'Cooldown: 120 → 80s.'),
+          C('CHANGED', 'Spirits: 6/9/12 → 10/11/12 (Lv 25 talent: +6 → +3).'),
+          C('CHANGED', 'Spirit damage reworked: 100/200/300 average (40–60 spread) → flat 36/48/60, plus Spirit Bonus Damage 50% → 30/40/50% (Lv 10 talent: +50 / +10% → +15 / +12%).'),
+          C('CHANGED', 'Active Bonus Movespeed: 4/8/12% → 20/25/30%.'),
+          C('CHANGED', 'Common upgrade: radius/distances +120 → +70, capped at 2 uses (was 4), no longer grants +2 Spirits.'),
+        ],
+      },
+    ],
+  },
+
+  nevermore: {
+    changedIn: '1.03I',
+    sections: [
+      {
+        ability: 'Requiem of Souls',
+        changes: [
+          C('CHANGED', 'Lv 20 talent now reads "+30% Damage per Requiem of Souls hit" (was "+30% Requiem of Souls Damage").'),
         ],
       },
     ],
